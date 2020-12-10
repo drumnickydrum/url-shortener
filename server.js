@@ -5,8 +5,6 @@ const dns = require('dns');
 const mongoose = require('mongoose');
 const Url = require('./model.js');
 
-const { url } = require('inspector');
-const { userInfo } = require('os');
 // connect to mongoDB Atlas database
 require('dotenv').config();
 mongoose.connect(
@@ -31,6 +29,7 @@ app.get('/', function (req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
+// create shortened url
 const shrink = (url) => {
   const newUrl = new Url({
     original_url: url,
@@ -56,14 +55,11 @@ app.post('/api/shorturl/new/', (req, res) => {
 app.get('/api/shorturl/:short/', async (req, res) => {
   let newUrl = await Url.find({ short_url: req.params.short }).then((i) => {
     const rd = i[0].original_url;
-    console.log(rd);
     return rd;
   });
-  console.log(newUrl);
   if (newUrl.substr(0, 7) !== 'http://' || newUrl.substr(0, 8) !== 'https://') {
     newUrl = 'http://' + newUrl;
   }
-  console.log(newUrl);
   return res.redirect(307, newUrl);
 });
 
