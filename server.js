@@ -40,16 +40,20 @@ const shrink = (url) => {
 
 app.post('/api/shorturl/new/', (req, res) => {
   const tempUrl = req.body.url;
-  if (!tempUrl) return res.json({ error: 'invalid url' });
-  const url = tempUrl.replace(/^https?:\/\/(.+)/, '$1');
-  dns.lookup(url, async (err, a, b) => {
-    if (err) {
-      return res.json({ error: 'invalid url' });
-    } else {
-      const { original_url, short_url } = await shrink(url);
-      return res.json({ original_url, short_url });
-    }
-  });
+  if (tempUrl.match(/^https?:\/\//)) {
+    const urlObject = new URL(tempUrl);
+    dns.lookup(urlObject.hostname, async (err, a, b) => {
+      if (err) {
+        return res.json({ error: 'invalid url' });
+      } else {
+        // console.log(urlObject)
+        const { original_url, short_url } = await shrink(urlObject.href);
+        return res.json({ original_url: tempUrl, short_url });
+      }
+    });
+  } else {
+    return res.json({ error: 'invalid url' });
+  }
 });
 
 app.get('/api/shorturl/:short/', async (req, res) => {
@@ -57,9 +61,6 @@ app.get('/api/shorturl/:short/', async (req, res) => {
     const rd = i[0].original_url;
     return rd;
   });
-  if (newUrl.substr(0, 7) !== 'http://' || newUrl.substr(0, 8) !== 'https://') {
-    newUrl = 'http://' + newUrl;
-  }
   return res.redirect(307, newUrl);
 });
 
